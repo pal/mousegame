@@ -1,57 +1,79 @@
-import React from 'react';
+import { memo, useMemo } from 'react';
 import styled from 'styled-components';
 import { Point } from '../types';
-import { Hexagon } from './Hexagon';
-
-const BoardContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-`;
-
-const Row = styled.div<{ offset: number }>`
-    display: flex;
-    margin-left: ${props => props.offset}px;
-    margin-top: -13px;
-    &:first-child {
-        margin-top: 0;
-    }
-`;
+import { HexCell } from './Hexagon';
 
 interface BoardProps {
-    size: number;
-    walls: Point[];
-    mousePosition: Point;
-    onCellClick: (position: Point) => void;
+  size: number;
+  walls: ReadonlyArray<Point>;
+  mouse: Point;
+  onCellClick: (p: Point) => void;
+  interactive: boolean;
 }
 
-export function Board({ size, walls, mousePosition, onCellClick }: BoardProps) {
-    const rows = Array.from({ length: size }, (_, i) => i);
-    const cols = Array.from({ length: size }, (_, i) => i);
+const HEX_VERTICAL_RATIO = 0.75;   // pointy-top row vertical advance / hex height
+const HEX_HEIGHT_RATIO = 1.1547;   // hex height / hex width (2 / sqrt(3))
 
-    return (
-        <BoardContainer>
-            {rows.map(row => (
-                <Row key={row} offset={row * 30}>
-                    {cols.map(col => {
-                        const position = { x: col, y: row };
-                        const isWall = walls.some(
-                            wall => wall.x === col && wall.y === row
-                        );
-                        const hasMouse = 
-                            mousePosition.x === col && mousePosition.y === row;
+const Frame = styled.div<{ $cols: number; $rows: number }>`
+  --hex-size: clamp(20px, min(7vw, calc((90vh - 200px) / ${(p) => p.$rows + 1})), 56px);
 
-                        return (
-                            <Hexagon
-                                key={`${col}-${row}`}
-                                isWall={isWall}
-                                hasMouse={hasMouse}
-                                onClick={() => onCellClick(position)}
-                            />
-                        );
-                    })}
-                </Row>
-            ))}
-        </BoardContainer>
-    );
-} 
+  position: relative;
+  width: calc((${(p) => p.$cols} + 0.5) * var(--hex-size));
+  height: calc(
+    var(--hex-size) * ${HEX_HEIGHT_RATIO} +
+      (${(p) => p.$rows - 1}) * var(--hex-size) * ${HEX_HEIGHT_RATIO} * ${HEX_VERTICAL_RATIO}
+  );
+  margin: 8px auto;
+  padding: 12px;
+  border-radius: 24px;
+  background: var(--board);
+  box-shadow: var(--shadow);
+`;
+
+function BoardImpl({ size, walls, mouse, onCellClick, interactive }: BoardProps) {
+  const wallKeys = useMemo(() => {
+    const s = new Set<string>();
+    for (const w of walls) s.add(`${w.x},${w.y}`);
+    return s;
+  }, [walls]);
+
+  const cells = useMemo(() => {
+    const out: { p: Point; xPct: number; yPct: number }[] = [];
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const rowShift = y % 2 === 0 ? 0 : 0.5;
+        out.push({ p: { x, y }, xPct: x + rowShift, yPct: y });
+      }
+    }
+    return out;
+  }, [size]);
+
+  return (
+    <Frame $cols={size} $rows={size} role="grid" aria-label="Hex board">
+      {cells.map(({ p, xPct, yPct }) => {
+        const isWall = wallKeys.has(`${p.x},${p.y}`);
+        const hasMouse = mouse.x === p.x && mouse.y === p.y;
+        return (
+          <HexCell
+            key={`${p.x},${p.y}`}
+            role="gridcell"
+            aria-label={
+              hasMouse ? 'Mouse' : isWall ? 'Wall' : `Empty cell ${p.x},${p.y}`
+            }
+            aria-disabled={!interactive || isWall || hasMouse}
+            $isWall={isWall}
+            $hasMouse={hasMouse}
+            $interactive={interactive}
+            style={{
+              left: `calc(${xPct} * var(--hex-size))`,
+              top: `calc(${yPct} * var(--hex-size) * ${HEX_HEIGHT_RATIO} * ${HEX_VERTICAL_RATIO})`,
+            }}
+            onClick={() => onCellClick(p)}
+          />
+        );
+      })}
+    </Frame>
+  );
+}
+
+export const Board = memo(BoardImpl);
