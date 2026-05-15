@@ -103,27 +103,44 @@ export const shortestPathToEdge = (
   return null;
 };
 
+export interface MoveOptions {
+  /** 1 = perfect BFS, 0 = random walk. Defaults to 1. */
+  smartness?: number;
+  /** Injectable RNG (for tests). Defaults to Math.random. */
+  random?: () => number;
+}
+
 /**
  * Pick the mouse's next position.
- *  - If an edge is reachable: step one cell along the shortest path.
- *  - If not: pick the open neighbour with the largest open degree (stay mobile).
- *  - If completely surrounded: stay put.
+ *  - With probability `smartness`: step one cell along the shortest path to the
+ *    nearest edge (BFS). On ties, picks a random shortest neighbour.
+ *  - Otherwise: pick a random open neighbour ("makes a mistake").
+ *  - If no edge is reachable: max-mobility neighbour.
+ *  - If surrounded: stay put.
  */
 export const calculateMouseMove = (
   position: Point,
   walls: ReadonlyArray<Point>,
   size: number,
+  options: MoveOptions = {},
 ): Point => {
-  const path = shortestPathToEdge(position, walls, size);
-  if (path && path.length >= 2) return path[1];
-
+  const { smartness = 1, random = Math.random } = options;
   const open = openNeighbors(position, walls, size);
   if (open.length === 0) return position;
-  return open.reduce((best, candidate) => {
-    const bestDeg = openNeighbors(best, walls, size).length;
-    const candDeg = openNeighbors(candidate, walls, size).length;
-    return candDeg > bestDeg ? candidate : best;
-  });
+
+  const playSmart = random() < smartness;
+
+  if (playSmart) {
+    const path = shortestPathToEdge(position, walls, size);
+    if (path && path.length >= 2) return path[1];
+    return open.reduce((best, candidate) => {
+      const bestDeg = openNeighbors(best, walls, size).length;
+      const candDeg = openNeighbors(candidate, walls, size).length;
+      return candDeg > bestDeg ? candidate : best;
+    });
+  }
+
+  return open[Math.floor(random() * open.length)];
 };
 
 /** True iff `a` and `b` refer to the same cell. */
