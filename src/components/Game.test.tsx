@@ -8,6 +8,7 @@ const config: BoardConfig = {
   startingScore: 100,
   scorePerWall: 10,
   scorePerMove: 10,
+  aiSmartness: 1,
 };
 
 const clickCell = (x: number, y: number) => {

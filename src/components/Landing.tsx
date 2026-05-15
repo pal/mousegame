@@ -113,15 +113,15 @@ export function Landing({ onStart }: LandingProps) {
       <DifficultyRow>
         <Card onClick={() => onStart('EASY')} aria-label="Easy difficulty">
           <CardTitle>Easy</CardTitle>
-          <CardMeta>9 × 9 board · slow drain</CardMeta>
+          <CardMeta>9 × 9 · clumsy mouse</CardMeta>
         </Card>
         <Card onClick={() => onStart('NORMAL')} aria-label="Normal difficulty">
           <CardTitle>Normal</CardTitle>
-          <CardMeta>11 × 11 board · standard</CardMeta>
+          <CardMeta>11 × 11 · smart mouse</CardMeta>
         </Card>
         <Card onClick={() => onStart('HARD')} aria-label="Hard difficulty">
           <CardTitle>Hard</CardTitle>
-          <CardMeta>13 × 13 board · fast drain</CardMeta>
+          <CardMeta>13 × 13 · ruthless mouse</CardMeta>
         </Card>
       </DifficultyRow>
     </Wrap>

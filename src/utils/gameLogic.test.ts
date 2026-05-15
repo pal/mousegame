@@ -130,9 +130,12 @@ describe('shortestPathToEdge (BFS)', () => {
 });
 
 describe('calculateMouseMove', () => {
-  it('takes the first step of the shortest path', () => {
+  const always = (v: number) => () => v;
+  const smart = { smartness: 1, random: always(0) };
+
+  it('takes the first step of the shortest path when smart', () => {
     const mouse = { x: 2, y: 2 };
-    const next = calculateMouseMove(mouse, [], 5);
+    const next = calculateMouseMove(mouse, [], 5, smart);
     const path = shortestPathToEdge(mouse, [], 5)!;
     expect(next).toEqual(path[1]);
   });
@@ -140,20 +143,20 @@ describe('calculateMouseMove', () => {
   it('never steps onto a wall', () => {
     const mouse = { x: 2, y: 2 };
     const walls: Point[] = [{ x: 2, y: 1 }];
-    const next = calculateMouseMove(mouse, walls, 5);
+    const next = calculateMouseMove(mouse, walls, 5, smart);
     expect(walls.some((w) => samePoint(w, next))).toBe(false);
   });
 
   it('stays put if completely surrounded', () => {
     const mouse = { x: 2, y: 2 };
     const walls = getNeighbors(mouse);
-    expect(calculateMouseMove(mouse, walls, 5)).toEqual(mouse);
+    expect(calculateMouseMove(mouse, walls, 5, smart)).toEqual(mouse);
   });
 
   it('picks an open neighbour when not surrounded', () => {
     const mouse = { x: 3, y: 3 };
     const walls: Point[] = [{ x: 3, y: 2 }];
-    const next = calculateMouseMove(mouse, walls, 7);
+    const next = calculateMouseMove(mouse, walls, 7, smart);
     const ns = getNeighbors(mouse);
     expect(ns.some((n) => samePoint(n, next))).toBe(true);
     expect(walls.some((w) => samePoint(w, next))).toBe(false);
@@ -162,9 +165,39 @@ describe('calculateMouseMove', () => {
   it('respects walls placed since the last move (regression for stale-walls race)', () => {
     const mouse = { x: 3, y: 3 };
     const wallsBefore: Point[] = [];
-    const aboutToPlace: Point = calculateMouseMove(mouse, wallsBefore, 7);
+    const aboutToPlace = calculateMouseMove(mouse, wallsBefore, 7, smart);
     const wallsAfter = [...wallsBefore, aboutToPlace];
-    const next = calculateMouseMove(mouse, wallsAfter, 7);
+    const next = calculateMouseMove(mouse, wallsAfter, 7, smart);
     expect(samePoint(next, aboutToPlace)).toBe(false);
+  });
+
+  it('makes a random move when smartness=0', () => {
+    const mouse = { x: 3, y: 3 };
+    const next = calculateMouseMove(mouse, [], 7, {
+      smartness: 0,
+      random: always(0.5),
+    });
+    const ns = getNeighbors(mouse);
+    expect(ns.some((n) => samePoint(n, next))).toBe(true);
+  });
+
+  it('plays the BFS step when RNG returns < smartness', () => {
+    const mouse = { x: 3, y: 3 };
+    const smartPick = calculateMouseMove(mouse, [], 7, {
+      smartness: 0.5,
+      random: always(0.1),
+    });
+    const optimal = shortestPathToEdge(mouse, [], 7)![1];
+    expect(samePoint(smartPick, optimal)).toBe(true);
+  });
+
+  it('plays a random step when RNG returns >= smartness', () => {
+    const mouse = { x: 3, y: 3 };
+    const seq = [0.9, 0]; // first call decides smart-or-not, second picks index
+    let i = 0;
+    const random = () => seq[i++];
+    const pick = calculateMouseMove(mouse, [], 7, { smartness: 0.5, random });
+    const open = getNeighbors(mouse);
+    expect(samePoint(pick, open[0])).toBe(true);
   });
 });

@@ -127,7 +127,9 @@ export function Game({ config, onExit }: GameProps) {
 
       setThinking(true);
       timer.current = setTimeout(() => {
-        const next = calculateMouseMove(mouse, nextWalls, config.size);
+        const next = calculateMouseMove(mouse, nextWalls, config.size, {
+          smartness: config.aiSmartness,
+        });
         const moveCost = samePoint(next, mouse) ? 0 : config.scorePerMove;
         const updatedScore = Math.max(0, nextScore - moveCost);
         setMouse(next);
