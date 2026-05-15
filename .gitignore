@@ -7,3 +7,6 @@ coverage/
 .env.local
 .vite/
 tsconfig.tsbuildinfo
+test-results/
+playwright-report/
+screenshots/

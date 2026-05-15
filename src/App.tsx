@@ -9,7 +9,8 @@ import { Difficulty } from './types';
 const Shell = styled.main`
   min-height: 100vh;
   display: grid;
-  place-items: start center;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
   padding: 24px 16px 48px;
   gap: 16px;
 `;

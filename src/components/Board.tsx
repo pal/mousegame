@@ -18,13 +18,16 @@ const Frame = styled.div<{ $cols: number; $rows: number }>`
   --hex-size: clamp(20px, min(7vw, calc((90vh - 200px) / ${(p) => p.$rows + 1})), 56px);
 
   position: relative;
-  width: calc((${(p) => p.$cols} + 0.5) * var(--hex-size));
+  --frame-pad: 12px;
+  width: calc((${(p) => p.$cols} + 0.5) * var(--hex-size) + var(--frame-pad) * 2);
   height: calc(
     var(--hex-size) * ${HEX_HEIGHT_RATIO} +
-      (${(p) => p.$rows - 1}) * var(--hex-size) * ${HEX_HEIGHT_RATIO} * ${HEX_VERTICAL_RATIO}
+      (${(p) => p.$rows - 1}) * var(--hex-size) * ${HEX_HEIGHT_RATIO} * ${HEX_VERTICAL_RATIO} +
+      var(--frame-pad) * 2
   );
+  max-width: calc(100vw - 32px);
   margin: 8px auto;
-  padding: 12px;
+  padding: var(--frame-pad);
   border-radius: 24px;
   background: var(--board);
   box-shadow: var(--shadow);

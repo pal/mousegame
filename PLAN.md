@@ -28,11 +28,11 @@ Each criterion has an acceptance test (automated where possible, manual otherwis
 - **F8.** The wall the player just placed is included in the wall-set the mouse uses when it decides its next move. *(integration test — guards against the original race condition)*
 
 ### Visual / UX
-- **V1.** Hex grid renders with proper odd-r offset; no overlapping hexes, no gaps. *(manual + screenshot)*
-- **V2.** Layout is responsive: works at 360px (mobile) and 1440px (desktop) widths without horizontal scroll. *(manual)*
-- **V3.** Mouse, walls and empty cells are visually distinct; hover state on empty cells; subtle animation when a wall is placed and when the mouse moves. *(manual)*
-- **V4.** A landing page is shown before the game with title, rules, difficulty selector, and a Start button. *(manual)*
-- **V5.** End-of-game banner with score and a "Play again" button. *(manual)*
+- **V1.** Hex grid renders with proper odd-r offset; no overlapping hex *hit areas*, no gaps. *(Playwright `mouse cell is aria-disabled and rejects clicks` + screenshots)*
+- **V2.** Layout is responsive: works at Pixel-7 (412 px) and desktop (1280 px) widths without horizontal scroll. *(Playwright `responsive at mobile viewport`)*
+- **V3.** Mouse, walls and empty cells are visually distinct; hover state on empty cells; subtle animation when a wall is placed and when the mouse moves. *(screenshots attached to e2e run)*
+- **V4.** A landing page is shown before the game with title, rules, difficulty selector, and a Start button. *(Playwright `landing page renders and starts a Normal game`)*
+- **V5.** End-of-game banner with score and a "Play again" button. *(Playwright `game ends with a banner; Restart returns to a fresh game`)*
 
 ### Performance
 - **P1.** Click-to-render of a placed wall is under one animation frame (≤ 16 ms) in production build. *(perf check via React profiler — manual)*

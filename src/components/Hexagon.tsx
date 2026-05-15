@@ -30,12 +30,12 @@ export const HexCell = styled.button<CellProps>`
   background: transparent;
   cursor: ${(p) => (p.$interactive && !p.$isWall && !p.$hasMouse ? 'pointer' : 'default')};
   outline: none;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     background: ${(p) =>
       p.$isWall
         ? 'linear-gradient(180deg, #3b2a4d 0%, #25182f 100%)'

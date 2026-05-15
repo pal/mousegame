@@ -22,8 +22,9 @@ const Wrap = styled.section`
 
 const HUD = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  gap: 8px 12px;
   width: min(640px, 100%);
   padding: 12px 16px;
   border-radius: 16px;
@@ -32,17 +33,17 @@ const HUD = styled.div`
   font-weight: 600;
 `;
 
-const Pill = styled.span<{ tone?: 'good' | 'bad' | 'neutral' }>`
+const Pill = styled.span<{ $tone?: 'good' | 'bad' | 'neutral' }>`
   padding: 4px 12px;
   border-radius: 999px;
   font-size: 14px;
   background: ${(p) =>
-    p.tone === 'good'
+    p.$tone === 'good'
       ? 'var(--good)'
-      : p.tone === 'bad'
+      : p.$tone === 'bad'
         ? 'var(--bad)'
         : 'var(--accent-soft)'};
-  color: ${(p) => (p.tone ? 'white' : 'var(--ink)')};
+  color: ${(p) => (p.$tone && p.$tone !== 'neutral' ? 'white' : 'var(--ink)')};
 `;
 
 const Spacer = styled.div`flex: 1;`;
@@ -63,11 +64,11 @@ const Button = styled.button`
   &:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 2px; }
 `;
 
-const Banner = styled.div<{ tone: 'good' | 'bad' }>`
+const Banner = styled.div<{ $tone: 'good' | 'bad' }>`
   width: min(640px, 100%);
   padding: 16px 20px;
   border-radius: 16px;
-  background: ${(p) => (p.tone === 'good' ? 'var(--good)' : 'var(--bad)')};
+  background: ${(p) => (p.$tone === 'good' ? 'var(--good)' : 'var(--bad)')};
   color: white;
   display: flex;
   align-items: center;
@@ -148,8 +149,8 @@ export function Game({ config, onExit }: GameProps) {
   return (
     <Wrap>
       <HUD aria-label="Game status">
-        <Pill tone="neutral">Score {score}</Pill>
-        <Pill tone="neutral">Walls {walls.length}</Pill>
+        <Pill $tone="neutral">Score {score}</Pill>
+        <Pill $tone="neutral">Walls {walls.length}</Pill>
         <Spacer />
         <Button onClick={reset} aria-label="Restart game">Restart</Button>
         <Button onClick={onExit} aria-label="Back to menu">Menu</Button>
@@ -164,13 +165,13 @@ export function Game({ config, onExit }: GameProps) {
       />
 
       {status === 'PLAYER_WON' && (
-        <Banner tone="good" role="status">
+        <Banner $tone="good" role="status">
           <BannerText>You trapped the mouse! Final score: {score}</BannerText>
           <Button onClick={reset}>Play again</Button>
         </Banner>
       )}
       {status === 'MOUSE_WON' && (
-        <Banner tone="bad" role="status">
+        <Banner $tone="bad" role="status">
           <BannerText>The mouse escaped. Final score: {score}</BannerText>
           <Button onClick={reset}>Play again</Button>
         </Banner>

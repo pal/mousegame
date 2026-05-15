@@ -61,8 +61,9 @@ The full criteria are in [`PLAN.md`](./PLAN.md). Summary of automated coverage:
 | F6: BFS pathfinding around walls | `gameLogic.test.ts` |
 | F7: restart resets state | `Game.test.tsx` |
 | F8: walls placed this tick are seen by the AI | `gameLogic.test.ts` (regression) |
-| T1: tests pass | `bun run test` |
+| T1: unit + integration tests pass | `bun run test` |
 | T2: typecheck + build | `bun run typecheck && bun run build` |
+| V1–V3, plus end-to-end UX in a real browser | `bun run test:e2e` (Playwright, desktop + Pixel-7 mobile) |
 
 ## Development
 
@@ -71,10 +72,16 @@ bun install
 bun run dev         # http://localhost:3000
 bun run test        # vitest run
 bun run test:watch  # vitest watch mode
+bun run test:e2e    # playwright (requires a chromium binary)
 bun run typecheck   # tsc -b --noEmit
 bun run build       # tsc -b && vite build → dist/
 bun run preview     # serve the production build
 ```
+
+The e2e suite uses Playwright. By default it auto-downloads Chromium; if the
+download is blocked, point at a local browser with
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chrome bun run test:e2e`. The
+config also auto-detects `/opt/pw-browsers/chromium` for sandboxed environments.
 
 ## Deployment
 
