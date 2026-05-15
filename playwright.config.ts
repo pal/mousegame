@@ -31,9 +31,17 @@ export default defineConfig({
       },
     },
     {
-      name: 'chromium-mobile',
+      name: 'pixel-7',
       use: {
         ...devices['Pixel 7'],
+        launchOptions,
+      },
+    },
+    {
+      name: 'iphone-14',
+      use: {
+        ...devices['iPhone 14'],
+        defaultBrowserType: 'chromium',
         launchOptions,
       },
     },

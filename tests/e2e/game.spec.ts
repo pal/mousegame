@@ -57,15 +57,68 @@ test.describe('Hex Maze', () => {
     await expect(page.getByRole('heading', { name: 'Hex Maze' })).toBeVisible();
   });
 
-  test('responsive at mobile viewport: no horizontal overflow', async ({
+  for (const diff of ['easy', 'normal', 'hard'] as const) {
+    test(`no horizontal overflow on ${diff} difficulty`, async ({ page }) => {
+      await page.goto('/');
+      await page
+        .getByRole('button', { name: new RegExp(`${diff} difficulty`, 'i') })
+        .click();
+      const overflow = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(1);
+    });
+  }
+
+  test('touch tap places a wall and updates the HUD', async ({
     page,
+    isMobile,
   }) => {
+    test.skip(!isMobile, 'touch-only scenario');
     await page.goto('/');
-    await page.getByRole('button', { name: /normal difficulty/i }).click();
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    await page.getByRole('button', { name: /easy difficulty/i }).tap();
+    await expect(page.getByRole('grid', { name: 'Hex board' })).toBeVisible();
+    const before = await page.getByText(/Score \d+/).first().textContent();
+    await page.locator('[aria-label^="Empty cell"]').first().tap();
+    await expect(page.getByText(/Walls 1/)).toBeVisible();
+    await expect(page.getByText(/Score \d+/).first()).not.toHaveText(
+      before ?? '',
     );
-    expect(overflow).toBeLessThanOrEqual(1);
+  });
+
+  test('mobile: touch target for any cell is at least 24x24 CSS px', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'mobile-only sanity check');
+    await page.goto('/');
+    await page.getByRole('button', { name: /easy difficulty/i }).tap();
+    const min = await page.evaluate(() => {
+      const cells = Array.from(
+        document.querySelectorAll('[role="gridcell"]'),
+      ) as HTMLElement[];
+      const dims = cells.map((c) => {
+        const r = c.getBoundingClientRect();
+        return Math.min(r.width, r.height);
+      });
+      return Math.min(...dims);
+    });
+    expect(min).toBeGreaterThanOrEqual(24);
+  });
+
+  test('mobile: HUD wraps so all controls are visible', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'mobile-only');
+    await page.goto('/');
+    await page.getByRole('button', { name: /normal difficulty/i }).tap();
+    await expect(page.getByRole('button', { name: /restart/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /menu/i })).toBeVisible();
+    await expect(page.getByText(/Score/)).toBeVisible();
+    await expect(page.getByText(/Walls/)).toBeVisible();
   });
 
   test('@screenshot landing and game', async ({ page }, testInfo) => {
