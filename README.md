@@ -1,64 +1,97 @@
-# Hex Maze Game
+# Hex Maze
 
-A strategic web-based game where players compete against an AI mouse in a hexagonal grid. Build walls to trap the mouse while it tries to escape to the edges of the board.
+A tiny strategy game: trap a clever mouse on a honeycomb board by placing walls before it reaches the edge. Built with React 19, TypeScript, styled-components and Vite, with a real shortest-path AI and a deploy-on-push pipeline to GitHub Pages.
 
-## Game Rules
-- Players click empty hexagons to build walls
-- The mouse moves after each wall placement
-- Score starts at 1000 and decreases by 10 with each move
-- Players win by trapping the mouse with no escape route
-- The mouse wins by reaching any edge of the board
+## Play
 
-## Tech Stack
-- React
-- TypeScript
-- Styled Components
-- Bun as the runtime
+1. Pick a difficulty on the landing page.
+2. Click any empty hex to drop a wall. Each wall costs points.
+3. The mouse moves one step along its shortest path to the nearest edge after every wall you place. Each move also costs points.
+4. **You win** if the mouse has no legal move left.
+5. **The mouse wins** if it reaches an edge cell — or if your score hits zero.
 
-## Implementation Plan
+## Tech stack
 
-### Completed
-- ✅ Basic game board layout
-- ✅ Hexagonal grid system
-- ✅ Wall placement mechanics
-- ✅ Mouse movement logic
-- ✅ Score tracking
-- ✅ Win/lose conditions
+| Layer | Choice |
+| --- | --- |
+| UI | React 19 + styled-components 6 |
+| Build | Vite 8 |
+| Language | TypeScript 5 (strict) |
+| Tests | Vitest 4, Testing Library, jsdom |
+| Runtime | Bun |
+| Deploy | GitHub Actions → GitHub Pages |
 
-### Todo
-1. Mouse AI Improvements
-   - Implement pathfinding algorithm (A*)
-   - Add difficulty levels
-   - Make mouse movement more strategic
+## Project layout
 
-2. UI/UX Enhancements
-   - Add responsive design for mobile
-   - Improve visual feedback for player actions
-   - Add animations for mouse movement
-   - Add a game restart button
+```
+src/
+  App.tsx                # top-level view switcher: Landing ↔ Game
+  index.tsx              # React entry point
+  config.ts              # difficulty presets, board geometry helpers
+  types.ts               # shared types (Point, GameStatus, Difficulty, …)
+  styles/theme.ts        # global CSS variables + reset
+  components/
+    Landing.tsx          # start screen, difficulty selector
+    Game.tsx             # state machine: score, walls, mouse, status
+    Board.tsx            # absolutely-positioned, responsive hex grid
+    Hexagon.tsx          # styled hex button (pointy-top, animated)
+    Game.test.tsx        # integration tests
+  utils/
+    gameLogic.ts         # hex math, BFS pathfinder, win/lose checks
+    gameLogic.test.ts    # unit tests
+  test/setup.ts          # vitest global setup
+```
 
-3. Game Features
-   - Add a tutorial/help section
-   - Implement different board sizes
-   - Add sound effects
-   - Save high scores
+## Architecture notes
 
-4. Performance Optimization
-   - Optimize render cycles
-   - Add memoization where needed
+* **Odd-r offset hex coordinates.** All hex math (neighbours, bounds, BFS) lives in `src/utils/gameLogic.ts` and assumes pointy-top hexes laid out in odd-r offset coordinates. Even rows have neighbours `{E, W, NE=(0,-1), NW=(-1,-1), SE=(0,+1), SW=(-1,+1)}`; odd rows are shifted right by half a cell. The unit tests verify symmetry (if A is a neighbour of B, B is a neighbour of A).
+* **Mouse AI.** `calculateMouseMove` runs a BFS from the mouse's current cell to the nearest edge cell, treating walls as impassable. The mouse then steps one cell along the shortest path. If no edge is reachable it falls back to a degree heuristic — choosing the open neighbour with the most open neighbours of its own.
+* **Race-free state.** When the player places a wall, `Game.tsx` first builds the new wall set, then both schedules the mouse's next move and checks win conditions against that same set in the same tick. The original implementation read stale state inside `setTimeout`; that bug is regression-tested.
+* **Responsive board.** Hex size is a single CSS custom property (`--hex-size`) computed with `clamp()` from the viewport. The board has no media queries — it just scales.
 
-5. Testing
-   - Add unit tests for game logic
-   - Add integration tests
-   - Add browser compatibility tests
+## Success criteria & acceptance tests
+
+The full criteria are in [`PLAN.md`](./PLAN.md). Summary of automated coverage:
+
+| Criterion | Where it is verified |
+| --- | --- |
+| F1: six valid neighbours per cell, both row parities | `gameLogic.test.ts` |
+| F2: cannot wall the mouse / a wall | `Game.test.tsx` |
+| F3, F4: win/lose detection | `gameLogic.test.ts` |
+| F6: BFS pathfinding around walls | `gameLogic.test.ts` |
+| F7: restart resets state | `Game.test.tsx` |
+| F8: walls placed this tick are seen by the AI | `gameLogic.test.ts` (regression) |
+| T1: unit + integration tests pass | `bun run test` |
+| T2: typecheck + build | `bun run typecheck && bun run build` |
+| V1–V3, plus end-to-end UX in a real browser | `bun run test:e2e` (Playwright, desktop + Pixel-7 mobile) |
 
 ## Development
 
-To run the project locally:
-
 ```bash
 bun install
-bun dev
+bun run dev         # http://localhost:3000
+bun run test        # vitest run
+bun run test:watch  # vitest watch mode
+bun run test:e2e    # playwright (requires a chromium binary)
+bun run typecheck   # tsc -b --noEmit
+bun run build       # tsc -b && vite build → dist/
+bun run preview     # serve the production build
 ```
 
-This implementation provides a solid foundation for the game. The next priority should be improving the mouse AI to make the game more challenging and implementing the responsive design for mobile devices. Would you like me to focus on any specific aspect from the todo list?
+The e2e suite uses Playwright. By default it auto-downloads Chromium; if the
+download is blocked, point at a local browser with
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chrome bun run test:e2e`. The
+config also auto-detects `/opt/pw-browsers/chromium` for sandboxed environments.
+
+## Deployment
+
+`.github/workflows/deploy.yml` runs on every push to `main`:
+
+1. Install deps with Bun.
+2. Run typecheck and tests.
+3. Build with `GITHUB_PAGES_BASE=/<repo-name>/` so all asset URLs work under the project subpath.
+4. Publish `dist/` to GitHub Pages.
+
+To enable Pages for the first time, in the GitHub repo settings go to **Pages → Build and deployment → Source** and choose **GitHub Actions**.
+
+The deployed site URL will be `https://<owner>.github.io/<repo>/`.
